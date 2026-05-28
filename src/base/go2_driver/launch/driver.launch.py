@@ -37,7 +37,7 @@ def generate_launch_description():
     # 为 rviz2 启动添加开关
     use_rviz= DeclareLaunchArgument(
         name="use_rviz",
-        default_value="true"
+        default_value="True"
     )
 
     return LaunchDescription([

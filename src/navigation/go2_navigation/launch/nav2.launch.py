@@ -41,13 +41,13 @@ def generate_launch_description():
 
     autostart = DeclareLaunchArgument(
         'autostart',
-        default_value='true',
+        default_value='True',
         description='Automatically startup the nav2 stack'
     )
 
     use_composition = DeclareLaunchArgument(
         'use_composition',
-        default_value='true',
+        default_value='True',
         description='Use composed bringup if true'
     )
 

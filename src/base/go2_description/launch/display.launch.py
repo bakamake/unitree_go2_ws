@@ -29,7 +29,7 @@ def generate_launch_description():
     go2_description_pkg = get_package_share_directory("go2_description")
     use_joint_state_publisher = DeclareLaunchArgument(
         name = "use_joint_state_publisher",
-        default_value="true"
+        default_value="True"
     )
     model = DeclareLaunchArgument(
         name = "urdf_path",
