@@ -1,0 +1,65 @@
+# SLAM Toolbox 异步在线建图参数
+slam_toolbox:
+  ros__parameters:
+    # ---- 运行模式 ----
+    use_sim_time: false              # 实机运行,使用系统时间
+    mode: mapping                    # mapping(建图) / localization(纯定位)
+
+    # ---- 坐标系 ----
+    odom_frame: odom
+    map_frame: map
+    base_frame: base                 # ⚠ Go2 用 base 不是 base_link
+    scan_topic: /scan
+
+    # ---- QoS 匹配 ----
+    # /scan 上游用 BEST_EFFORT,这里必须对齐,否则订不到
+    # ⚠ slam_toolbox 只认扁平的点分 key 格式,嵌套写法会被静默忽略
+    qos_overrides:
+      "/scan.subscription.reliability": "best_effort"
+      "/scan.subscription.durability": "volatile"
+      "/scan.subscription.history": "keep_last"
+      "/scan.subscription.depth": 10
+
+    # ---- TF / 时间 ----
+    transform_publish_period: 0.02   # 50 Hz 发布 map→odom TF,默认 5 Hz 对 Nav2 偏慢
+    map_update_interval: 5.0         # 每 5 秒向 /map 话题推一次最新地图
+    transform_timeout: 0.2
+    tf_buffer_duration: 30.0
+
+    # ---- 地图参数 ----
+    resolution: 0.05                # 5 cm / 像素,室内场景够用;调小地图更精细但内存吃得多
+
+    # ---- 建图触发条件 ----
+    # 机器人移动/转动超过阈值才触发一次新的关键帧,避免同一位置刷帧
+    minimum_travel_distance: 0.2  # 移动 0.2 m 才更新
+    minimum_travel_heading: 0.2   # 转动 0.2 rad(~11.5°)才更新
+    scan_buffer_size: 30
+    scan_buffer_maximum_scan_distance: 15.0
+
+    # ---- 扫描匹配 ----
+    link_match_minimum_response_fine: 0.1
+    link_scan_maximum_distance: 2.5
+    correlation_search_space_dimension: 0.5
+    correlation_search_space_resolution: 0.01
+    correlation_search_space_smear_deviation: 0.1
+
+    # ---- 回环检测 ----
+    do_loop_closing: true            # 开启回环,绕一圈能对齐的话地图质量大大提升
+    loop_search_maximum_distance: 3.0
+    loop_match_minimum_chain_size: 10
+    loop_match_maximum_variance_coarse: 3.0
+    loop_match_minimum_response_coarse: 0.6
+    loop_match_minimum_response_fine: 0.7
+    loop_search_space_dimension: 8.0
+    loop_search_space_resolution: 0.05
+    loop_search_space_smear_deviation: 0.03
+
+    # ---- 匹配惩罚项(影响精度的关键)----
+    distance_variance_penalty: 0.5
+    angle_variance_penalty: 2.0
+    fine_search_angle_offset: 0.00349
+    coarse_search_angle_offset: 0.349
+    coarse_angle_resolution: 0.0349
+    minimum_angle_penalty: 0.9
+    minimum_distance_penalty: 0.5
+    use_response_expansion: true
