@@ -64,13 +64,13 @@ sudo podman run -it -v /home/bakamake/unitree_ros2:/unitree_ros2 -w /unitree_ros
 # 激活虚拟环境与ros humble环境与工作空间环境
 （pwsh）exit
 
-conda activate ros_humble
-source ~/unitree_ros2/setup.sh
-source $HOME/unitree_ros2/cyclonedds_ws/install/setup.bash
-source ~/unitree_ros2/install/setup.bash
-cd ~/u/unitree_go2_ws
-colcon build
-source install/setup.bash
+    conda activate ros_humble
+    source ~/unitree_ros2/setup.sh
+    source $HOME/unitree_ros2/cyclonedds_ws/install/setup.bash
+    source ~/unitree_ros2/install/setup.bash
+    cd ~/u/unitree_go2_ws
+    colcon build
+    source install/setup.bash
 
 
 ros2 launch go2_navigation navigation.launch.py map:=$HOME/u/unitree_go2_ws/maps/my_map.yaml \
