@@ -1,31 +1,56 @@
-/**:
+# /**:
+#   ros__parameters:
+#     # 输入点云话题（Unitree Go2 UTlidar）
+#     cloud_in: /utlidar/cloud_deskewed
+#     # 输出激光扫描话题
+#     scan_out: /scan
+#
+#     # 坐标系设置
+#     target_frame: radar  # 输出激光数据的目标坐标系
+#
+#     # 激光扫描范围（高度方向）
+#     min_height: -0.5     # 最小高度（米），相对于target_frame
+#     max_height: 1.0      # 最大高度（米），建议略高于雷达安装高度
+#
+#     # 角度范围
+#     angle_min: -3.14159  # 最小角度（弧度），-π
+#     angle_max: 3.14159   # 最大角度（弧度），π
+#     angle_increment: 0.0087  # 角度增量（约0.5度）
+#
+#     # 距离范围
+#     range_min: 0.1       # 最小距离（米）
+#     range_max: 20.0      # 最大距离（米）
+#
+#     # 扫描时间
+#     scan_time: 0.1       # 扫描周期（秒）
+#
+#     # 并发线程数
+#     concurrency_level: 1
+#
+#     # 使用无穷值
+#     use_inf: true
+# 3D 点云 → 2D 扫描 的转换参数
+/pointcloud_to_laserscan_node:
   ros__parameters:
-    # 输入点云话题（Unitree Go2 UTlidar）
-    cloud_in: /utlidar/cloud_deskewed
-    # 输出激光扫描话题
-    scan_out: /scan
+    # ---- 坐标系 ----
+    target_frame: base               # 输出的 LaserScan 定义在 base 坐标系下
+    transform_tolerance: 0.5         # TF 查询容忍,时间戳修复后仍可能有小抖动,这个能兜住
 
-    # 坐标系设置
-    target_frame: radar  # 输出激光数据的目标坐标系
+    # ---- 高度过滤(相对 base 坐标系)----
+    # base 原点离地面 ~0.31m,即地面在 base 中 Z ≈ -0.31
+    min_height: -0.28              # 略高于地面,防止地面反射当障碍
+    max_height: 1.0                # 足够覆盖大部分室内障碍(桌椅/人)
 
-    # 激光扫描范围（高度方向）
-    min_height: -0.5     # 最小高度（米），相对于target_frame
-    max_height: 1.0      # 最大高度（米），建议略高于雷达安装高度
+    # ---- 角度范围(全圆)----
+    angle_min: -3.14159
+    angle_max: 3.14159
+    angle_increment: 0.0087          # 约 0.5°/射线,一圈 723 射线
 
-    # 角度范围
-    angle_min: -3.14159  # 最小角度（弧度），-π
-    angle_max: 3.14159   # 最大角度（弧度），π
-    angle_increment: 0.0087  # 角度增量（约0.5度）
+    # ---- 距离过滤 ----
+    range_min: 0.3                 # 低于此距离的点视为自身反射或近场噪声
+    range_max: 20.0                # L1 雷达有效测距远端
 
-    # 距离范围
-    range_min: 0.1       # 最小距离（米）
-    range_max: 20.0      # 最大距离（米）
-
-    # 扫描时间
-    scan_time: 0.1       # 扫描周期（秒）
-
-    # 并发线程数
+    # ---- 性能 ----
+    scan_time: 0.1
     concurrency_level: 1
-
-    # 使用无穷值
-    use_inf: true
+    use_inf: true                    # 无返回时填 inf 而非最大距离(SLAM 更稳)

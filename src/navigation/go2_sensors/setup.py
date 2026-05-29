@@ -29,7 +29,8 @@ setup(
         ],
     },
     entry_points={
-        'console_scripts': [
+        "console_scripts": [
+            "pointcloud_timestamp_fix = go2_sensors.pointcloud_timestamp_fix:main",
         ],
     },
 )
