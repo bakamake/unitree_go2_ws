@@ -30,7 +30,7 @@
 #     # 使用无穷值
 #     use_inf: true
 # 3D 点云 → 2D 扫描 的转换参数
-/pointcloud_to_laserscan_node:
+pointcloud_to_laserscan:
   ros__parameters:
     # ---- 坐标系 ----
     target_frame: base               # 输出的 LaserScan 定义在 base 坐标系下

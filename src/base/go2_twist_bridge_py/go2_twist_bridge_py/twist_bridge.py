@@ -1,48 +1,73 @@
-'''
-  订阅twist消息，并转换为go2所需的request消息来控制
-  实现：
-    1.Request发布对象
-    2.twist订阅对象
-    3.在回调函数中转换消息并发布
+#!/usr/bin/env python3
+"""
+Twist → Go2 Request 桥接节点
+带死区 + 限幅保护
+"""
 
-'''
-
+import json
 import rclpy
 from rclpy.node import Node
-from unitree_api.msg import Request
 from geometry_msgs.msg import Twist
+from unitree_api.msg import Request
 from .sport_model import ROBOT_SPORT_API_IDS
-import json
+
+
+# ==================== 保护参数（教程保守值） ====================
+MAX_LINEAR_VEL   = 0.30   # m/s
+MAX_ANGULAR_VEL  = 0.50   # rad/s
+LINEAR_DEADBAND  = 0.02   # m/s
+ANGULAR_DEADBAND = 0.05   # rad/s
+
+DEFAULT_CMD_VEL_TOPIC = "cmd_vel"
+DEFAULT_REQUEST_TOPIC = "/api/sport/request"
+
+
+def apply_deadband(value: float, threshold: float) -> float:
+    return 0.0 if abs(value) < threshold else value
+
+
+def clamp(value: float, limit: float) -> float:
+    return max(-limit, min(value, limit))
+
 
 class TwistBridge(Node):
     def __init__(self):
-        super().__init__('twist_bridge')
-        # 1.Request发布对象
-        self.request_pub = self.create_publisher(Request,"/api/sport/request",10)
-        # 2.twist订阅对象
-        self.twist_sub = self.create_subscription(Twist,"cmd_vel",self.twist_cb,10)
+        super().__init__("twist_bridge")
 
-    def twist_cb(self,twist):
-        # 3.在回调函数中转换消息并发布
+        self.request_pub = self.create_publisher(
+            Request, DEFAULT_REQUEST_TOPIC, 10
+        )
+        self.twist_sub = self.create_subscription(
+            Twist, DEFAULT_CMD_VEL_TOPIC, self.twist_callback, 10
+        )
+
+        self.get_logger().info("Twist 桥接节点已启动：/cmd_vel -> /api/sport/request")
+
+    def sanitize_twist(self, msg: Twist):
+        x = clamp(apply_deadband(msg.linear.x, LINEAR_DEADBAND), MAX_LINEAR_VEL)
+        y = clamp(apply_deadband(msg.linear.y, LINEAR_DEADBAND), MAX_LINEAR_VEL)
+        z = clamp(apply_deadband(msg.angular.z, ANGULAR_DEADBAND), MAX_ANGULAR_VEL)
+        return x, y, z
+
+    def twist_callback(self, msg: Twist):
+        x, y, z = self.sanitize_twist(msg)
+
         request = Request()
-        x = twist.linear.x
-        y = twist.linear.y
-        z = twist.angular.z
-        # 设置api_id
-        api_id = ROBOT_SPORT_API_IDS["BALANCESTAND"]
-        if x != 0 or y != 0 or z != 0:
-            api_id = ROBOT_SPORT_API_IDS["MOVE"]
-            # 设置参数
-            js = {"x": x, "y": y, "z": z}
-            request.parameter = json.dumps(js)
 
-        request.header.identity.api_id = api_id
+        if x == 0.0 and y == 0.0 and z == 0.0:
+            request.header.identity.api_id = ROBOT_SPORT_API_IDS["BALANCESTAND"]
+        else:
+            request.header.identity.api_id = ROBOT_SPORT_API_IDS["MOVE"]
+            request.parameter = json.dumps({"x": x, "y": y, "z": z})
+
         self.request_pub.publish(request)
+
 
 def main():
     rclpy.init()
     rclpy.spin(TwistBridge())
     rclpy.shutdown()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
