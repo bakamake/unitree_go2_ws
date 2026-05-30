@@ -32,7 +32,7 @@ class Driver(Node):
 
         self.declare_parameter("odom_frame","odom")
         self.declare_parameter("base_frame","base")
-        self.declare_parameter("publish_tf","true")
+        self.declare_parameter("publish_tf", True)
 
         self.odom_frame = self.get_parameter("odom_frame").value
         self.base_frame = self.get_parameter("base_frame").value
